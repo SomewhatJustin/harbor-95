@@ -22,8 +22,12 @@ const servers = (
 	.map((server) => server.trim())
 	.filter(Boolean);
 
-const b64 = (value: unknown) =>
-	Buffer.from(String(value ?? ""), "utf8").toString("base64");
+function b64(value: unknown) {
+	if (value instanceof Uint8Array) {
+		return Buffer.from(value).toString("base64");
+	}
+	return Buffer.from(String(value ?? ""), "utf8").toString("base64");
+}
 const fromB64 = (value: unknown) =>
 	Buffer.from(String(value ?? ""), "base64").toString("utf8");
 const sleep = (milliseconds: number) =>
