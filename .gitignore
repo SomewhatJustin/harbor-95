@@ -1,0 +1,4 @@
+# Local identity, database, and blobs.
+/harbormaster-95-PROTOTYPE-data/
+/node_modules/
+*.log

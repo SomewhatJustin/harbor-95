@@ -1,0 +1,26 @@
+{
+  "name": "harbor-95",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.34.5",
+  "scripts": {
+    "dev": "wish ui.tcl",
+    "typecheck": "tsc --noEmit",
+    "check": "pnpm typecheck && biome check src"
+  },
+  "dependencies": {
+    "@polycentric/js-core": "2.15.0",
+    "@polycentric/js-storage-sqlite": "2.15.0",
+    "@polycentric/rs-core-wasm": "2.15.0",
+    "better-sqlite3": "^12.6.2",
+    "drizzle-orm": "^0.45.2"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.11",
+    "@types/better-sqlite3": "^7.6.13",
+    "@types/node": "^24.0.0",
+    "tsx": "4.23.11",
+    "typescript": "^5.9.3"
+  }
+}
