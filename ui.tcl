@@ -33,14 +33,14 @@ proc json_number_field {line key} {
     return 0
 }
 
-proc send_command {action {text ""} {image_paths {}}} {
+proc send_command {action {text ""} {image_paths {}} {parent_key ""} {root_key ""}} {
     if {$::bridge eq ""} { return }
     incr ::request_id
     set encoded [b64encode $text]
     set encoded_paths [join [lmap path $image_paths {b64encode $path}] ,]
     puts $::bridge [format \
-        {{"id":%d,"action":"%s","textB64":"%s","imagePathsB64":"%s"}} \
-        $::request_id $action $encoded $encoded_paths]
+        {{"id":%d,"action":"%s","textB64":"%s","imagePathsB64":"%s","parentKeyB64":"%s","rootKeyB64":"%s"}} \
+        $::request_id $action $encoded $encoded_paths $parent_key $root_key]
     flush $::bridge
     set ::busy 1
     .toolbar configure -cursor watch
@@ -67,7 +67,7 @@ proc clear_feed {} {
     .main.feed configure -state disabled
 }
 
-proc add_post {author created text images} {
+proc add_post {author created text images key root_key is_reply} {
     incr ::post_count
     set short_author $author
     if {[string length $short_author] > 18} {
@@ -76,14 +76,22 @@ proc add_post {author created text images} {
     .main.feed configure -state normal
     .main.feed insert end "#$::post_count  $short_author" author
     .main.feed insert end "  $created\n" date
+    if {$is_reply eq "true"} {
+        .main.feed insert end "↳ REPLY\n" reply
+    }
     .main.feed insert end "$text\n" body
     foreach image [split $images "\n"] {
         if {$image ne ""} {
             .main.feed insert end "IMAGE: $image\n" image
         }
     }
-    .main.feed insert end \
-        "  ☞ REPLY     ★ FAVORITE     ↻ REBROADCAST\n" actions
+    set reply_tag "reply_action_$::post_count"
+    .main.feed tag configure $reply_tag -font {Courier 8 bold} -foreground #008080
+    .main.feed tag bind $reply_tag <Button-1> [list open_reply_dialog $author $text $key $root_key]
+    .main.feed tag bind $reply_tag <Enter> {.main.feed configure -cursor hand2}
+    .main.feed tag bind $reply_tag <Leave> {.main.feed configure -cursor xterm}
+    .main.feed insert end "  ☞ REPLY" $reply_tag
+    .main.feed insert end "     ★ FAVORITE     ↻ REBROADCAST\n" actions
     .main.feed insert end \
         "__________________________________________________________________\n" rule
     .main.feed configure -state disabled
@@ -127,7 +135,10 @@ proc handle_bridge_line {line} {
                 [b64decode [json_string_field $line authorB64]] \
                 [b64decode [json_string_field $line createdAtB64]] \
                 [b64decode [json_string_field $line textB64]] \
-                [b64decode [json_string_field $line imagesB64]]
+                [b64decode [json_string_field $line imagesB64]] \
+                [json_string_field $line keyB64] \
+                [json_string_field $line rootKeyB64] \
+                [json_string_field $line isReply]
         }
         feed_end {
             set notice [b64decode [json_string_field $line messageB64]]
@@ -201,6 +212,57 @@ proc transmit_post {} {
     }
     set_status "Publishing post..."
     send_command create_post $text $::image_paths
+}
+
+proc submit_reply {parent_key root_key} {
+    set text [string trim [.reply.text get 1.0 end]]
+    if {$text eq ""} {
+        .reply.status configure -text "Add text before sending a reply."
+        bell
+        return
+    }
+    .reply.send configure -state disabled
+    .reply.text configure -state disabled
+    .reply.status configure -text "Publishing reply..."
+    set_status "Publishing reply..."
+    send_command create_reply $text {} $parent_key $root_key
+    destroy .reply
+}
+
+proc open_reply_dialog {author original_text parent_key root_key} {
+    if {$parent_key eq "" || $root_key eq ""} {
+        set_status "This post cannot be used as a reply target."
+        bell
+        return
+    }
+    if {[winfo exists .reply]} { destroy .reply }
+    toplevel .reply
+    wm title .reply "Reply to Post"
+    wm transient .reply .
+    wm geometry .reply 620x310
+    label .reply.title -text "REPLY TO $author" -font {Helvetica 13 bold} \
+        -background #000080 -foreground white -anchor w -padx 10 -pady 8
+    set preview [string trim $original_text]
+    if {[string length $preview] > 260} { set preview "[string range $preview 0 256]..." }
+    label .reply.original -text $preview -wraplength 580 -justify left -anchor w \
+        -background white -relief sunken -borderwidth 2 -padx 10 -pady 10
+    label .reply.label -text "YOUR REPLY:" -font {Helvetica 9 bold} -anchor w
+    text .reply.text -height 5 -wrap word -font {Courier 11} -background white \
+        -relief sunken -borderwidth 2
+    label .reply.status -text "" -font {Helvetica 9} -anchor w -foreground #000080
+    frame .reply.actions
+    button .reply.actions.cancel -text "CANCEL" -command {destroy .reply} -padx 14
+    button .reply.send -text "SEND REPLY" -font {Helvetica 10 bold} \
+        -command [list submit_reply $parent_key $root_key] -padx 14
+    pack .reply.title -side top -fill x
+    pack .reply.original -side top -fill x -padx 12 -pady 10
+    pack .reply.label -side top -fill x -padx 12
+    pack .reply.actions.cancel .reply.send -side right -padx 8 -pady 8
+    pack .reply.actions -side bottom -fill x
+    pack .reply.status -side bottom -fill x -padx 12 -pady 4
+    pack .reply.text -side top -fill both -expand 1 -padx 12 -pady 4
+    bind .reply <Control-Return> [list submit_reply $parent_key $root_key]
+    focus .reply.text
 }
 
 proc render_attachments {} {
@@ -371,6 +433,7 @@ text .main.feed -yscrollcommand {.main.scroll set} -wrap word -state disabled \
 .main.feed tag configure author -font {Helvetica 10 bold} -foreground #000080
 .main.feed tag configure date -font {Helvetica 8} -foreground #606060
 .main.feed tag configure body -font {Times 13} -spacing1 7 -spacing3 7
+.main.feed tag configure reply -font {Courier 8 bold} -foreground #800080
 .main.feed tag configure image -font {Courier 8 underline} -foreground #0000cc
 .main.feed tag configure actions -font {Courier 8 bold} -foreground #008080
 .main.feed tag configure rule -foreground #a0a0a0

@@ -59,10 +59,15 @@ function decodePost(bundle: v2.EventBundle) {
 		const content = v2.Content.fromBinary(
 			bundle.serializedContent.contentBytes,
 		);
-		if (content.contentBody.oneofKind !== "post") return null;
+		if (content.contentBody.oneofKind !== "post" || !event.key) return null;
 
 		return {
 			id: Buffer.from(bundle.signedEvent.signature).toString("hex"),
+			keyB64: b64(v2.EventKey.toBinary(event.key)),
+			rootKeyB64: b64(
+				v2.EventKey.toBinary(content.contentBody.post.reply?.root ?? event.key),
+			),
+			isReply: Boolean(content.contentBody.post.reply),
 			author: event.key?.identity ?? "unknown identity",
 			createdAt: Number(event.createdAt ?? 0n),
 			text: content.contentBody.post.text,
@@ -122,6 +127,9 @@ async function emitFeed(id: number, includeRemote: boolean) {
 			createdAtB64: b64(new Date(post.createdAt).toLocaleString()),
 			textB64: b64(post.text),
 			imagesB64: b64(post.images.join("\n")),
+			keyB64: post.keyB64,
+			rootKeyB64: post.rootKeyB64,
+			isReply: post.isReply,
 		});
 	}
 	send({
@@ -241,6 +249,8 @@ type Request = {
 	action?: string;
 	textB64?: string;
 	imagePathsB64?: string;
+	parentKeyB64?: string;
+	rootKeyB64?: string;
 };
 
 async function processImage(imagePath: string): Promise<v2.ImageSet> {
@@ -337,6 +347,56 @@ async function dispatch(request: Request) {
 				type: "post_complete",
 				messageB64: b64(message),
 			});
+			emitState(id, message);
+			await emitFeed(id, false);
+			return;
+		}
+
+		case "create_reply": {
+			if (!client.activeIdentityKey) {
+				throw new Error("Create or pair an identity before replying.");
+			}
+			const text = fromB64(request.textB64).trim();
+			if (!text) throw new Error("Add text before sending a reply.");
+
+			let parent: v2.EventKey;
+			let root: v2.EventKey;
+			try {
+				parent = v2.EventKey.fromBinary(
+					Buffer.from(String(request.parentKeyB64 ?? ""), "base64"),
+				);
+				root = v2.EventKey.fromBinary(
+					Buffer.from(String(request.rootKeyB64 ?? ""), "base64"),
+				);
+			} catch {
+				throw new Error("The selected post cannot be used as a reply target.");
+			}
+
+			const content = client.contentManager.build({
+				oneofKind: "post",
+				post: {
+					text,
+					reply: { root, parent },
+					images: [],
+					links: [],
+					labels: ["harbor"],
+					attributedTo: [],
+				},
+			});
+			await client.contentManager.save(content);
+			const event = await client.buildEvent(content);
+			const signedEvent = await client.signEvent(event);
+			await client.commitEvent(signedEvent, content);
+
+			let message = "Reply signed and saved locally.";
+			try {
+				await client.sync();
+				message = "Reply published.";
+			} catch (error) {
+				const reason = error instanceof Error ? error.message : String(error);
+				message = `Reply saved locally; synchronization failed: ${reason}`;
+			}
+			send({ id, ok: true, type: "post_complete", messageB64: b64(message) });
 			emitState(id, message);
 			await emitFeed(id, false);
 			return;

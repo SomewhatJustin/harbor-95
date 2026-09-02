@@ -31,8 +31,25 @@ pnpm dev
 ```
 
 The client uses the public Polycentric package registry configured in
-`.npmrc`. It connects to `https://srv.harbor.social` and
-`https://srv.polycentric.io` by default.
+`.npmrc`. `pnpm dev` connects to `https://srv.harbor.social` and
+`https://srv.polycentric.io` by default; no environment variables are needed
+to use production.
+
+## Using production
+
+Production posts, replies, and image uploads are real and public. Before
+using an identity that you already use on Harbor Web, pair it rather than
+creating another identity:
+
+1. Start the client with `pnpm dev`.
+2. Select **Pair Identity**.
+3. In Harbor Web, open **Settings > Pair Identity**, create a pairing session,
+   and paste its copied code into Harbor 95.
+4. Approve the pending key in Harbor Web.
+
+Use **CREATE IDENTITY** only when you intend to make a new identity. To reply,
+click **☞ REPLY** below a post, enter text, and select **SEND REPLY**. The
+reply is linked to the selected post and its existing conversation thread.
 
 Local identity and post data is written to the ignored
 `harbormaster-95-PROTOTYPE-data/` directory. Keep that directory private.
@@ -51,13 +68,21 @@ to Harbor's JPEG variants before upload.
 
 ## Configuration
 
-Override the production servers with a comma-separated list:
+Override the production servers with a comma-separated list (useful for local
+development or a non-production deployment):
 
 ```sh
 POLYCENTRIC_SEED_SERVERS=https://example.invalid pnpm dev
 ```
 
-Set `HARBOR95_DATA_DIR` to move the local database and blob directory.
+Set `HARBOR95_DATA_DIR` to move the local database and blob directory. For an
+isolated test profile that cannot contact a real server:
+
+```sh
+HARBOR95_DATA_DIR="$(mktemp -d)" \
+POLYCENTRIC_SEED_SERVERS=http://127.0.0.1:9 \
+pnpm dev
+```
 
 ## Status
 
