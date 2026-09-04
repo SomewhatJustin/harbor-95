@@ -201,13 +201,19 @@ function decodePairingCode(input: string): PairingSessionInfo {
 
 async function pairIdentity(id: number, encodedCode: string) {
 	const sessionInfo = decodePairingCode(encodedCode);
-	const status = await client.pairingSessionManager.joinPairingSession(
-		sessionInfo.code,
-		sessionInfo.origin,
-	);
-	if (status.pairingSession.issuerIdentity !== sessionInfo.identity) {
+	if (!/^[0-9a-fA-F]{64}$/.test(sessionInfo.code)) {
+		throw new Error("Invalid pairing session digest.");
+	}
+	const pairingInfo = v2.PairingInfo.create({
+		server: sessionInfo.origin,
+		digestSha256: Buffer.from(sessionInfo.code, "hex"),
+	});
+	const status =
+		await client.pairingSessionManager.getPairingSession(pairingInfo);
+	if (status.digest.issuerIdentity !== sessionInfo.identity) {
 		throw new Error("Pairing session identity does not match the issuer.");
 	}
+	await client.pairingSessionManager.joinPairingSession(pairingInfo);
 
 	send({
 		id,
@@ -216,31 +222,25 @@ async function pairIdentity(id: number, encodedCode: string) {
 		messageB64: b64("Waiting for approval on your other device..."),
 	});
 
-	let marker: bigint | null = null;
-	const expiresAt = status.pairingSession.expiresAt.getTime();
+	const expiresAt = status.expiresAt.getTime();
 	while (Date.now() < expiresAt) {
-		const nextMarker = await client.identityManager
-			.pollRemoteIdentityMarker(sessionInfo.identity, sessionInfo.origin)
-			.catch(() => marker);
+		const authorized = await client.pairingSessionManager
+			.pollForAuthorization(pairingInfo)
+			.catch(() => false);
 
-		if (nextMarker !== null && nextMarker !== marker) {
-			if (!client.servers.includes(sessionInfo.origin)) {
-				client.servers.push(sessionInfo.origin);
-				client.core.setServers(client.servers);
-			}
-			const identity = await client.identityManager.claim(sessionInfo.identity);
-			if (identity) {
-				send({
-					id,
-					ok: true,
-					type: "pairing_complete",
-					messageB64: b64("Identity paired successfully."),
-				});
-				emitState(id, "Identity paired successfully.");
-				await emitFeed(id, false);
-				return;
-			}
-			marker = nextMarker;
+		if (authorized) {
+			await client.identityManager.claim(sessionInfo.identity, [
+				sessionInfo.origin,
+			]);
+			send({
+				id,
+				ok: true,
+				type: "pairing_complete",
+				messageB64: b64("Identity paired successfully."),
+			});
+			emitState(id, "Identity paired successfully.");
+			await emitFeed(id, false);
+			return;
 		}
 		await sleep(2_000);
 	}

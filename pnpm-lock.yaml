@@ -9,14 +9,14 @@ importers:
   .:
     dependencies:
       '@polycentric/js-core':
-        specifier: 2.15.0
-        version: 2.15.0
+        specifier: 2.16.0
+        version: 2.16.0
       '@polycentric/js-storage-sqlite':
-        specifier: 2.15.0
-        version: 2.15.0(@polycentric/js-core@2.15.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.11.1)
+        specifier: 2.16.0
+        version: 2.16.0(@polycentric/js-core@2.16.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.11.1)
       '@polycentric/rs-core-wasm':
-        specifier: 2.15.0
-        version: 2.15.0
+        specifier: 2.16.0
+        version: 2.16.0
       better-sqlite3:
         specifier: ^12.6.2
         version: 12.11.1
@@ -263,16 +263,16 @@ packages:
     resolution: {integrity: sha512-X5XaVWZIBCT7HHZGm5I7ZQXDwLG+bGXuSrMQAW+7Zvl87h1kmc1ZB1VSRJcpUfoUrGQp4Fkoxm5kZ+Ms+aW+eA==}
     engines: {node: '>= 20.19.0'}
 
-  '@polycentric/js-core@2.15.0':
-    resolution: {integrity: sha1-REhK2Ru7bzL49JYcMVVcLEBd16s=, tarball: https://gitlab.futo.org/api/v4/projects/42/packages/npm/@polycentric/js-core/-/@polycentric/js-core-2.15.0.tgz}
+  '@polycentric/js-core@2.16.0':
+    resolution: {integrity: sha1-kxrVQ6q+ARdhz0qdRMjYe8VbtSo=, tarball: https://gitlab.futo.org/api/v4/projects/42/packages/npm/@polycentric/js-core/-/@polycentric/js-core-2.16.0.tgz}
 
-  '@polycentric/js-storage-sqlite@2.15.0':
-    resolution: {integrity: sha1-0S11YUsB3TIKVWohpYEANZXFzWE=, tarball: https://gitlab.futo.org/api/v4/projects/42/packages/npm/@polycentric/js-storage-sqlite/-/@polycentric/js-storage-sqlite-2.15.0.tgz}
+  '@polycentric/js-storage-sqlite@2.16.0':
+    resolution: {integrity: sha1-Lo8YiZ5GW6O/qG9JBAG0PvxVApk=, tarball: https://gitlab.futo.org/api/v4/projects/42/packages/npm/@polycentric/js-storage-sqlite/-/@polycentric/js-storage-sqlite-2.16.0.tgz}
     peerDependencies:
-      '@polycentric/js-core': 2.15.0
+      '@polycentric/js-core': 2.16.0
 
-  '@polycentric/rs-core-wasm@2.15.0':
-    resolution: {integrity: sha1-nQds3F75KoByc62+RarO4Gyf324=, tarball: https://gitlab.futo.org/api/v4/projects/42/packages/npm/@polycentric/rs-core-wasm/-/@polycentric/rs-core-wasm-2.15.0.tgz}
+  '@polycentric/rs-core-wasm@2.16.0':
+    resolution: {integrity: sha1-Bg4DzRqnC3E+zri0MW2J2V4ctjo=, tarball: https://gitlab.futo.org/api/v4/projects/42/packages/npm/@polycentric/rs-core-wasm/-/@polycentric/rs-core-wasm-2.16.0.tgz}
 
   '@protobuf-ts/grpcweb-transport@2.11.1':
     resolution: {integrity: sha512-1W4utDdvOB+RHMFQ0soL4JdnxjXV+ddeGIUg08DvZrA8Ms6k5NN6GBFU2oHZdTOcJVpPrDJ02RJlqtaoCMNBtw==}
@@ -673,11 +673,11 @@ snapshots:
 
   '@noble/hashes@2.4.0': {}
 
-  '@polycentric/js-core@2.15.0':
+  '@polycentric/js-core@2.16.0':
     dependencies:
       '@noble/curves': 2.4.0
       '@noble/hashes': 2.4.0
-      '@polycentric/rs-core-wasm': 2.15.0
+      '@polycentric/rs-core-wasm': 2.16.0
       '@protobuf-ts/grpcweb-transport': 2.11.1
       '@protobuf-ts/runtime': 2.11.1
       '@protobuf-ts/runtime-rpc': 2.11.1
@@ -685,9 +685,9 @@ snapshots:
       eventemitter3: 5.0.4
       js-base64: 3.9.3
 
-  '@polycentric/js-storage-sqlite@2.15.0(@polycentric/js-core@2.15.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.11.1)':
+  '@polycentric/js-storage-sqlite@2.16.0(@polycentric/js-core@2.16.0)(@types/better-sqlite3@7.6.13)(better-sqlite3@12.11.1)':
     dependencies:
-      '@polycentric/js-core': 2.15.0
+      '@polycentric/js-core': 2.16.0
       drizzle-orm: 0.45.2(@types/better-sqlite3@7.6.13)(better-sqlite3@12.11.1)
     transitivePeerDependencies:
       - '@aws-sdk/client-rds-data'
@@ -720,7 +720,7 @@ snapshots:
       - sql.js
       - sqlite3
 
-  '@polycentric/rs-core-wasm@2.15.0':
+  '@polycentric/rs-core-wasm@2.16.0':
     dependencies:
       '@ubjs/core': 0.31.0-5
       '@ubjs/wasm': 0.31.0-5(@ubjs/core@0.31.0-5)

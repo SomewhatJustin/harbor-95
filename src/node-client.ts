@@ -5,12 +5,13 @@
 
 import * as crypto from "node:crypto";
 import { promises as fs } from "node:fs";
+import { createRequire } from "node:module";
 import * as path from "node:path";
 import {
 	type IFileStoreDriver,
 	PolycentricClient,
 	toDigestKey,
-	type v2,
+	v2,
 } from "@polycentric/js-core";
 import {
 	DrizzleStorageDriver,
@@ -20,6 +21,17 @@ import {
 import { PolycentricCore, uniffiInitAsync } from "@polycentric/rs-core-wasm";
 import Database from "better-sqlite3";
 import { drizzle } from "drizzle-orm/better-sqlite3";
+
+const { version: applicationVersion } = createRequire(import.meta.url)(
+	"../package.json",
+) as { version: string };
+
+const application = v2.Application.create({
+	name: "Harbor 95",
+	id: "io.github.somewhatjustin.harbor95",
+	version: applicationVersion,
+	url: "https://github.com/SomewhatJustin/harbor-95",
+});
 
 class NodeFileStoreDriver implements IFileStoreDriver {
 	private constructor(private readonly directory: string) {}
@@ -88,6 +100,7 @@ export async function createPolycentricNodeClient(config: ClientConfig) {
 		core: new PolycentricCore(),
 		storageDriver: new DrizzleStorageDriver(database),
 		filestoreDriver: await NodeFileStoreDriver.create(config.blobDirectory),
+		application,
 		...(config.seedServers ? { seedServers: config.seedServers } : {}),
 	});
 }

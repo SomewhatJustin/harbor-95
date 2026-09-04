@@ -10,9 +10,9 @@
     "check": "pnpm typecheck && biome check src"
   },
   "dependencies": {
-    "@polycentric/js-core": "2.15.0",
-    "@polycentric/js-storage-sqlite": "2.15.0",
-    "@polycentric/rs-core-wasm": "2.15.0",
+    "@polycentric/js-core": "2.16.0",
+    "@polycentric/js-storage-sqlite": "2.16.0",
+    "@polycentric/rs-core-wasm": "2.16.0",
     "better-sqlite3": "^12.6.2",
     "drizzle-orm": "^0.45.2"
   },
